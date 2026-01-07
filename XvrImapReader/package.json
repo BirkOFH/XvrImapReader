@@ -2,12 +2,13 @@
   "name": "xvrimapreader",
   "version": "1.0.0",
   "description": "Advanced IMAP Node for n8n",
-  "main": "index.js",
+  "main": "dist/app.js",
   "scripts": {
-    "test": "node app.js",
+    "test": "tsc && node dist/app.js",
     "build": "tsc --build",
     "clean": "tsc --build --clean",
-    "dev": "tsc && node app.js"
+    "dev": "tsc && node dist/app.js",
+    "start": "node dist/app.js"
   },
   "keywords": [
     "n8n-community-node-package",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@types/mailparser": "^3.4.4",
     "@types/node": "^25.0.3",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "n8n-workflow": "^2.3.0",
     "typescript": "^5.9.3"

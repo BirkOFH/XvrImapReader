@@ -3,17 +3,26 @@ import { ImapService, ImapConfig, FetchOptions } from './ImapService';
 async function testImapService() {
     console.log('=== IMAP Service Test Runner ===\n');
 
-    // ?? ÇÀÌÅÍÈÒÅ ÍÀ ÂÀØÈ ÐÅÀËÜÍÛÅ ÄÀÍÍÛÅ
+    // Configuration from environment variables or defaults
     const config: ImapConfig = {
-        host: 'imap.example.com',
-        port: 993,
-        user: 'your-email@example.com',
-        password: 'your-password',
-        tls: true,
+        host: process.env.IMAP_HOST || 'imap.example.com',
+        port: parseInt(process.env.IMAP_PORT || '993'),
+        user: process.env.IMAP_USER || 'your-email@example.com',
+        password: process.env.IMAP_PASSWORD || 'your-password',
+        tls: process.env.IMAP_TLS !== 'false',
         tlsOptions: {
-            rejectUnauthorized: false,
+            rejectUnauthorized: process.env.IMAP_REJECT_UNAUTHORIZED === 'true',
         },
     };
+
+    // Display configuration (without password)
+    console.log('Configuration:');
+    console.log(`  Host: ${config.host}`);
+    console.log(`  Port: ${config.port}`);
+    console.log(`  User: ${config.user}`);
+    console.log(`  Password: ${'*'.repeat(config.password.length)}`);
+    console.log(`  TLS: ${config.tls}`);
+    console.log('');
 
     const imapService = new ImapService(config);
 
@@ -86,7 +95,7 @@ async function testImapService() {
         emailsWithAttachments.forEach((email, index) => {
             console.log(`   Email #${index + 1}: ${email.subject}`);
             if (email.attachments && email.attachments.length > 0) {
-                console.log(`   ? Has ${email.attachments.length} attachment(s)`);
+                console.log(`   ?? Has ${email.attachments.length} attachment(s)`);
             } else {
                 console.log(`   No attachments`);
             }

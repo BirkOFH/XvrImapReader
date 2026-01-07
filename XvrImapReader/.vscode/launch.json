@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch IMAP Test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/XvrImapReader/dist/app.js",
+      "cwd": "${workspaceFolder}/XvrImapReader",
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "envFile": "${workspaceFolder}/XvrImapReader/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch IMAP Test (with auto-build)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "preLaunchTask": "npm: build",
+      "program": "${workspaceFolder}/XvrImapReader/dist/app.js",
+      "cwd": "${workspaceFolder}/XvrImapReader",
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "envFile": "${workspaceFolder}/XvrImapReader/.env",
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/XvrImapReader/dist/**/*.js"
+      ]
+    }
+  ]
+}}

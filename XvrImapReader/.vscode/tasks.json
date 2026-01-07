@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "command": "npm run build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc"],
+      "label": "npm: build",
+      "detail": "tsc --build",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "type": "shell",
+      "command": "npm run clean",
+      "problemMatcher": [],
+      "label": "npm: clean",
+      "detail": "tsc --build --clean"
+    },
+    {
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": [],
+      "label": "npm: dev",
+      "detail": "tsc && node dist/app.js"
+    }
+  ]
+}

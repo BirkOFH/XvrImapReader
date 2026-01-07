@@ -1,3 +1,6 @@
-import './TestRunner';
+import { config } from 'dotenv';
 
-console.log('Hello world');
+// Load environment variables from .env file
+config();
+
+import './TestRunner';
