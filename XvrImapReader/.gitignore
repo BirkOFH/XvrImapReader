@@ -1,0 +1,28 @@
+node_modules/
+dist/
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# Except config files
+!eslint.config.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

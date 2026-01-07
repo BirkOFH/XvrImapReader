@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="XvrImapReader/XvrImapReader.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>
