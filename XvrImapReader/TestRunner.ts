@@ -79,7 +79,13 @@ async function testImapService() {
             console.log('');
         });
 
+        // Disconnect and reconnect for next test to avoid connection issues
+        console.log('   Closing connection...');
+        await imapService.disconnect();
+
         console.log('4. Testing with attachments...');
+        console.log('   Reconnecting...');
+        
         const fetchWithAttachments: FetchOptions = {
             folder: 'INBOX',
             limit: 2,

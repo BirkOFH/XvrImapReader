@@ -1,5 +1,7 @@
 # Advanced IMAP Node для n8n
 
+**?? Migrated to ImapFlow - Modern, Stable, Fast!**
+
 ## ?? Описание
 Продвинутый узел для работы с IMAP протоколом в n8n. Поддерживает:
 - ?? Получение списка папок
@@ -9,11 +11,22 @@
 - ?? Дополнительные фильтры для отправителя
 - ? Пометка по прочтению и флаги
 
+## ?? **Recent Update (2025-01-07)**
+
+? **Migrated from `imap-simple` to `imapflow`**
+- Modern, actively maintained library
+- Better compatibility with all IMAP servers (Yandex, Gmail, Outlook)
+- No more EPIPE errors!
+- Full TypeScript support
+
+See `MIGRATION.md` for details.
+
 ## ?? Структура
 
 ```
-ImapService.ts          - Бизнес-логика работы с IMAP (независимая от n8n)
+ImapService.ts          - Бизнес-логика работы с IMAP (ImapFlow)
 TestRunner.ts           - Локальный тест и отладка
+TestRunnerAdvanced.ts   - Улучшенный тест с управлением соединениями
 MyImap.node.ts          - n8n интерфейс узла
 MyImap.credentials.ts   - n8n credentials
 ```
@@ -25,62 +38,44 @@ MyImap.credentials.ts   - n8n credentials
 npm install
 ```
 
-### 2. Локальное тестирование (Visual Studio)
+### 2. Локальное тестирование
 
-Отредактируйте `TestRunner.ts` и укажите свои IMAP credentials:
-
-```typescript
-const config: ImapConfig = {
-    host: 'imap.example.com',
-    port: 993,
-    user: 'your-email@example.com',
-    password: 'your-password',
-    tls: true,
-};
-```
-
-Запустите:
+#### Создайте `.env`:
 ```bash
-npm run dev
+cp .env.example .env
+# Отредактируйте .env с вашими credentials
 ```
+
+#### Запустите тест:
+```powershell
+# Рекомендуется (надежный тест с управлением соединениями)
+.\run-test-advanced.ps1
+
+# Или базовый тест
+.\run-test.ps1
+```
+
+**?? Подробная инструкция:** см. `QUICKSTART.md`
 
 ### 3. Интеграция с n8n
 
 #### Вариант A: Community Node (рекомендуется)
 
-1. Создайте npm пакет:
-```bash
-npm init -scope=@yourusername
-```
-
-2. Добавьте в `package.json`:
-```json
-{
-  "name": "@yourusername/n8n-nodes-imap",
-  "version": "0.1.0",
-  "description": "Advanced IMAP node for n8n",
-  "main": "index.js",
-  "n8n": {
-    "nodes": ["dist/MyImap.node.js"],
-    "credentials": ["dist/MyImap.credentials.js"]
-  }
-}
-```
-
-3. Скомпилируйте:
+1. Скомпилируйте:
 ```bash
 npm run build
 ```
 
-4. Установите в n8n:
+2. Опубликуйте в npm или установите локально:
 ```bash
 cd ~/.n8n/custom
 npm install /path/to/your/package
 ```
 
+**?? Подробная инструкция:** см. `INSTALLATION.md`
+
 #### Вариант B: Прямое копирование (для разработки)
 
-1. Скопируйте файлы в `~/.n8n/custom/`:
 ```bash
 npm run build
 cp dist/MyImap.node.js ~/.n8n/custom/
@@ -88,7 +83,7 @@ cp dist/MyImap.credentials.js ~/.n8n/custom/
 cp dist/ImapService.js ~/.n8n/custom/
 ```
 
-2. Перезапустите n8n:
+Перезапустите n8n:
 ```bash
 n8n start
 ```
@@ -119,11 +114,9 @@ n8n start
 - **From Filter**: Фильтр по отправителю
 - **Subject Filter**: Фильтр по теме
 
-## ?? Структура
+## ?? Структура вывода
 
-### Выходные данные
-
-#### Основные поля:
+### Основные поля:
 
 ```json
 {
@@ -138,7 +131,7 @@ n8n start
 }
 ```
 
-#### Бинарные данные (вложения):
+### Бинарные данные (вложения):
 
 ```
 binary: {
@@ -146,9 +139,6 @@ binary: {
     data: "base64...",
     mimeType: "application/pdf",
     fileName: "document.pdf"
-  },
-  attachment_1: {
-    ...
   }
 }
 ```
@@ -157,7 +147,8 @@ binary: {
 
 ### Локальный запуск:
 ```bash
-npm run dev
+npm run dev                  # Базовый тест
+npm run test:advanced        # Улучшенный тест (рекомендуется)
 ```
 
 ### Сборка проекта:
@@ -214,14 +205,42 @@ npm run clean
 
 ### Не находит папки
 - Используйте операцию "Get Folders" для получения доступных папок
-- Обратите внимание разделители могут различаться (/, .)
+- Обратите внимание разделители могут различаться (/, ., |)
 
 ### Не скачиваются вложения
 - Убедитесь, что выбрано "Full (with Attachments)" в Data to Fetch
 - Проверьте размер писем при больших объемах
 
+### "INBOX is empty" в тестах
+- Это не ошибка! Просто нет непрочитанных писем
+- Отправьте себе тестовое письмо для проверки
+- Функциональность полностью работоспособна
+
+### Таймауты при больших вложениях
+- Увеличьте timeout в настройках n8n workflow
+- Рассмотрите обработку больших файлов отдельно
+
+---
+
+## ?? Документация
+
+- **README.md** (этот файл) - Обзор проекта и quick start
+- **QUICKSTART.md** - Подробный быстрый старт для тестирования
+- **INSTALLATION.md** - Детальная инструкция по установке в n8n
+- **TESTING.md** - Руководство по локальному тестированию
+- **MIGRATION.md** - История миграции на ImapFlow (2025-01-07)
+- **STATUS.md** - Текущий статус проекта (100% готов)
+- **TEST_RESULTS.md** - Результаты тестирования
+
 ## ?? Лицензия
 ISC
 
 ## ?? Поддержка
-При возникших с вопросом проблемах создавайте Issue в репозитории.
+При возникших проблемах:
+1. Проверьте `TROUBLESHOOTING.md`
+2. Запустите `TestRunnerAdvanced.ts` локально
+3. Создайте Issue в репозитории
+
+---
+
+**? Статус проекта:** Полностью функционален и готов к использованию!

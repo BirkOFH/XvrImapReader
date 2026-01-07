@@ -1,4 +1,4 @@
-import * as imaps from 'imap-simple';
+import { ImapFlow } from 'imapflow';
 import { simpleParser, ParsedMail, Attachment } from 'mailparser';
 
 export interface ImapConfig {
@@ -39,131 +39,172 @@ export interface EmailData {
 
 export class ImapService {
     private config: ImapConfig;
-    private connection: any = null;
+    private client: ImapFlow | null = null;
 
     constructor(config: ImapConfig) {
         this.config = config;
     }
 
-    private async connect(): Promise<any> {
-        if (this.connection) {
-            return this.connection;
+    private async connect(): Promise<ImapFlow> {
+        if (this.client) {
+            return this.client;
         }
 
-        const connectionConfig = {
-            imap: {
+        this.client = new ImapFlow({
+            host: this.config.host,
+            port: this.config.port,
+            secure: this.config.tls,
+            auth: {
                 user: this.config.user,
-                password: this.config.password,
-                host: this.config.host,
-                port: this.config.port,
-                tls: this.config.tls,
-                tlsOptions: this.config.tlsOptions || { rejectUnauthorized: false },
-                authTimeout: 10000,
+                pass: this.config.password,
             },
-        };
+            tls: {
+                rejectUnauthorized: this.config.tlsOptions?.rejectUnauthorized ?? false,
+            },
+            logger: false,
+        });
 
-        this.connection = await imaps.connect(connectionConfig);
-        return this.connection;
+        await this.client.connect();
+        return this.client;
     }
 
     async disconnect(): Promise<void> {
-        if (this.connection) {
-            await this.connection.end();
-            this.connection = null;
+        if (this.client) {
+            try {
+                await this.client.logout();
+            } catch (error) {
+                // Ignore errors when closing connection
+            }
+            this.client = null;
         }
     }
 
     async getFolderList(): Promise<string[]> {
         try {
-            const connection = await this.connect();
-            const boxes = await connection.getBoxes();
-            
+            const client = await this.connect();
             const folders: string[] = [];
-            this.flattenBoxes(boxes, '', folders);
+            
+            // Get mailbox tree
+            const mailboxes = await client.list();
+            
+            // Flatten the list
+            for (const mailbox of mailboxes) {
+                folders.push(mailbox.path);
+            }
             
             return folders;
         } catch (error) {
+            this.client = null;
             throw new Error(`Failed to get folder list: ${(error as Error).message}`);
-        }
-    }
-
-    private flattenBoxes(boxes: any, parentPath: string, result: string[]): void {
-        for (const [name, box] of Object.entries(boxes)) {
-            const currentPath = parentPath ? `${parentPath}/${name}` : name;
-            result.push(currentPath);
-
-            if (box && typeof box === 'object' && (box as any).children) {
-                this.flattenBoxes((box as any).children, currentPath, result);
-            }
         }
     }
 
     async fetchEmails(options: FetchOptions): Promise<EmailData[]> {
         try {
-            const connection = await this.connect();
+            const client = await this.connect();
             
-            await connection.openBox(options.folder);
+            // Open mailbox
+            const lock = await client.getMailboxLock(options.folder);
+            
+            try {
+                // Build search criteria
+                const searchCriteria = this.buildSearchCriteria(options.searchCriteria);
+                
+                // Search for messages (returns array of UIDs or false)
+                const searchResult = await client.search(searchCriteria);
+                const allUids = searchResult === false ? [] : searchResult;
+                
+                // Limit results
+                const messageUids = options.limit > 0 
+                    ? allUids.slice(0, options.limit) 
+                    : allUids;
 
-            const searchCriteria = options.searchCriteria.length > 0 
-                ? options.searchCriteria 
-                : ['ALL'];
+                const emails: EmailData[] = [];
 
-            const fetchOptions = {
-                bodies: options.downloadBody ? ['HEADER', 'TEXT', ''] : ['HEADER'],
-                markSeen: false,
-            };
+                // Fetch each message
+                for (const uid of messageUids) {
+                    const message = await client.fetchOne(
+                        String(uid),
+                        {
+                            source: options.downloadBody || options.downloadAttachments,
+                            envelope: true,
+                            bodyStructure: true,
+                        }
+                    );
 
-            const messages = await connection.search(searchCriteria, fetchOptions);
+                    const emailData = await this.parseMessage(message, options);
+                    emails.push(emailData);
 
-            const limitedMessages = options.limit > 0 
-                ? messages.slice(0, options.limit) 
-                : messages;
-
-            const emails: EmailData[] = [];
-
-            for (const message of limitedMessages) {
-                const emailData = await this.parseMessage(message, options);
-                emails.push(emailData);
-
-                if (options.markAsRead) {
-                    await this.markMessageAsRead(connection, message);
+                    if (options.markAsRead) {
+                        await client.messageFlagsAdd(String(uid), ['\\Seen']);
+                    }
                 }
-            }
 
-            return emails;
+                return emails;
+            } finally {
+                lock.release();
+            }
         } catch (error) {
+            this.client = null;
             throw new Error(`Failed to fetch emails: ${(error as Error).message}`);
         }
     }
 
-    private async parseMessage(message: any, options: FetchOptions): Promise<EmailData> {
-        const all = message.parts.find((part: any) => part.which === '');
-        const header = message.parts.find((part: any) => part.which === 'HEADER');
+    private buildSearchCriteria(criteria: any[]): any {
+        if (!criteria || criteria.length === 0 || criteria[0] === 'ALL') {
+            return { all: true };
+        }
 
+        const searchObj: any = {};
+
+        for (let i = 0; i < criteria.length; i++) {
+            const criterion = criteria[i];
+            
+            if (criterion === 'UNSEEN') {
+                searchObj.unseen = true;
+            } else if (criterion === 'SEEN') {
+                searchObj.seen = true;
+            } else if (criterion === 'FROM' && i + 1 < criteria.length) {
+                searchObj.from = criteria[i + 1];
+                i++;
+            } else if (criterion === 'SUBJECT' && i + 1 < criteria.length) {
+                searchObj.subject = criteria[i + 1];
+                i++;
+            }
+        }
+
+        return Object.keys(searchObj).length > 0 ? searchObj : { all: true };
+    }
+
+    private async parseMessage(message: any, options: FetchOptions): Promise<EmailData> {
+        const envelope = message.envelope;
+        
         let parsed: ParsedMail | null = null;
 
-        if (all) {
-            parsed = await simpleParser(all.body);
-        } else if (header) {
-            parsed = await simpleParser(header.body);
+        // Parse message body if needed
+        if (options.downloadBody || options.downloadAttachments) {
+            if (message.source) {
+                parsed = await simpleParser(message.source);
+            }
         }
 
         const getAddressText = (address: any): string => {
-            if (!address) return 'Unknown';
+            if (!address || address.length === 0) return 'Unknown';
             if (typeof address === 'string') return address;
-            if (address.text) return address.text;
-            if (Array.isArray(address) && address.length > 0) {
-                return address.map(a => a.text || a.address || '').join(', ');
+            
+            const first = address[0];
+            if (first.address) {
+                return first.name ? `${first.name} <${first.address}>` : first.address;
             }
-            return address.address || 'Unknown';
+            return 'Unknown';
         };
 
         const emailData: EmailData = {
-            uid: message.attributes.uid,
-            subject: parsed?.subject || 'No Subject',
-            from: getAddressText(parsed?.from),
-            to: getAddressText(parsed?.to),
-            date: parsed?.date || new Date(),
+            uid: message.uid,
+            subject: envelope.subject || 'No Subject',
+            from: getAddressText(envelope.from),
+            to: getAddressText(envelope.to),
+            date: envelope.date || new Date(),
         };
 
         if (options.downloadBody && parsed) {
@@ -181,14 +222,6 @@ export class ImapService {
         }
 
         return emailData;
-    }
-
-    private async markMessageAsRead(connection: any, message: any): Promise<void> {
-        try {
-            await connection.addFlags(message.attributes.uid, '\\Seen');
-        } catch (error) {
-            console.warn(`Failed to mark message as read: ${(error as Error).message}`);
-        }
     }
 
     async testConnection(): Promise<boolean> {

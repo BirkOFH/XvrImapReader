@@ -22,19 +22,33 @@ IMAP_REJECT_UNAUTHORIZED=false
 
 ## Шаг 3: Запустите тест
 
-### Способ 1: Через скрипт (РЕКОМЕНДУЕТСЯ) ??
+### Способ 1: Улучшенный тест-раннер (РЕКОМЕНДУЕТСЯ) ??
 
-**Windows PowerShell:**
+**PowerShell:**
+```powershell
+.\run-test-advanced.ps1
+```
+
+Этот тест создает свежее подключение для каждой фазы - надежнее!
+
+**Или через npm:**
+```bash
+npm run test:advanced
+```
+
+### Способ 2: Базовый тест-раннер
+
+**PowerShell:**
 ```powershell
 .\run-test.ps1
 ```
 
-**Windows CMD:**
+**CMD:**
 ```cmd
 run-test.bat
 ```
 
-### Способ 2: Через npm
+**npm:**
 ```bash
 npm run dev
 ```
@@ -75,6 +89,14 @@ Configuration:
    Found 3 unread emails:
    ...
 
+4. Testing with attachments...
+   Fetched 2 emails
+   Email #1: Test Email
+   ?? Has 1 attachment(s):
+     - document.pdf (12345 bytes, application/pdf)
+
+? All tests passed successfully!
+
 === Test completed ===
 ```
 
@@ -84,6 +106,11 @@ Configuration:
 - Проверьте правильность email и пароля
 - Для Gmail используйте **App Password**, не обычный пароль
 - Убедитесь, что IMAP включен в настройках Gmail
+
+### "This socket has been ended by the other party"
+- Это известная проблема при длительных тестах
+- **Решение:** Используйте `.\run-test-advanced.ps1`
+- Подробнее: см. `TROUBLESHOOTING.md`
 
 ### "Cannot find module"
 ```bash
@@ -114,9 +141,14 @@ npm run build
 npm run clean
 ```
 
-### Запуск тестов:
+### Запуск базового теста:
 ```bash
 npm run dev
+```
+
+### Запуск улучшенного теста:
+```bash
+npm run test:advanced
 ```
 
 ---
@@ -125,7 +157,8 @@ npm run dev
 
 - ? Файл `.env` в `.gitignore` - пароли в безопасности
 - ? Используйте `.env.example` как шаблон
-- ? Самый простой способ запуска: `.\run-test.ps1` или `run-test.bat`
+- ? **Рекомендуется:** `.\run-test-advanced.ps1` для надежного тестирования
+- ?? Проблемы? Смотрите `TROUBLESHOOTING.md`
 
 **?? Готово! Теперь можете тестировать.**
 
