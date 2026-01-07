@@ -1,0 +1,35 @@
+# Source files
+*.ts
+!*.d.ts
+tsconfig.json
+
+# Test files
+Test*.ts
+test-*.ps1
+run-test*.ps1
+run-test.bat
+app.ts
+.env
+.env.example
+
+# Documentation (keep only essential)
+STATUS.md
+TESTING.md
+QUICKSTART.md
+TEST_RESULTS.md
+
+# Development files
+node_modules/
+.vscode/
+.git/
+.gitignore
+*.log
+*.esproj
+
+# Keep in package:
+# README.md
+# INSTALLATION.md
+# MIGRATION.md
+# LICENSE
+# package.json
+# dist/

@@ -1,6 +1,9 @@
-# Advanced IMAP Node для n8n
+# Xvr Advanced IMAP Node для n8n
 
 **?? Migrated to ImapFlow - Modern, Stable, Fast!**
+
+[![npm version](https://img.shields.io/npm/v/n8n-nodes-xvr-advanced-imap.svg)](https://www.npmjs.com/package/n8n-nodes-xvr-advanced-imap)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ## ?? Описание
 Продвинутый узел для работы с IMAP протоколом в n8n. Поддерживает:
@@ -21,102 +24,74 @@
 
 See `MIGRATION.md` for details.
 
-## ?? Структура
+---
 
-```
-ImapService.ts          - Бизнес-логика работы с IMAP (ImapFlow)
-TestRunner.ts           - Локальный тест и отладка
-TestRunnerAdvanced.ts   - Улучшенный тест с управлением соединениями
-MyImap.node.ts          - n8n интерфейс узла
-MyImap.credentials.ts   - n8n credentials
-```
+## ?? Installation
 
-## ?? Быстрый старт
+### In n8n (Community Node)
 
-### 1. Установка зависимостей
-```bash
-npm install
-```
+1. Go to **Settings ? Community Nodes**
+2. Click **Install**
+3. Enter package name: `n8n-nodes-xvr-advanced-imap`
+4. Click **Install**
 
-### 2. Локальное тестирование
-
-#### Создайте `.env`:
-```bash
-cp .env.example .env
-# Отредактируйте .env с вашими credentials
-```
-
-#### Запустите тест:
-```powershell
-# Рекомендуется (надежный тест с управлением соединениями)
-.\run-test-advanced.ps1
-
-# Или базовый тест
-.\run-test.ps1
-```
-
-**?? Подробная инструкция:** см. `QUICKSTART.md`
-
-### 3. Интеграция с n8n
-
-#### Вариант A: Community Node (рекомендуется)
-
-1. Скомпилируйте:
-```bash
-npm run build
-```
-
-2. Опубликуйте в npm или установите локально:
-```bash
-cd ~/.n8n/custom
-npm install /path/to/your/package
-```
-
-**?? Подробная инструкция:** см. `INSTALLATION.md`
-
-#### Вариант B: Прямое копирование (для разработки)
+### Manual Installation
 
 ```bash
-npm run build
-cp dist/MyImap.node.js ~/.n8n/custom/
-cp dist/MyImap.credentials.js ~/.n8n/custom/
-cp dist/ImapService.js ~/.n8n/custom/
+npm install n8n-nodes-xvr-advanced-imap
 ```
 
-Перезапустите n8n:
-```bash
-n8n start
-```
+---
 
-## ?? Использование
+## ?? Quick Start
 
-### В n8n Workflow:
+### 1. Add Credentials
 
-1. Добавьте узел "My IMAP"
-2. Создайте credentials с данными IMAP сервера
-3. Выберите операцию:
-   - **Fetch Emails** - получить письма
-   - **Get Folders** - получить список папок
+1. Go to **Credentials** in n8n
+2. Click **+ Add Credential**
+3. Search for **Xvr IMAP Credentials**
+4. Fill in your IMAP server details:
+   - Host: `imap.yandex.ru` (or your IMAP server)
+   - Port: `993`
+   - User: `your-email@example.com`
+   - Password: your password (or App Password for Gmail)
+   - Secure Connection: `true`
 
-### Настройки Fetch Emails:
+### 2. Use in Workflow
 
-- **Mailbox Name**: Папка (INBOX, Sent, Spam и т.д.)
-- **Read Status**: All / Unread Only / Read Only
-- **Limit**: Максимальное количество писем (1-1000)
-- **Data to Fetch**:
-  - Metadata Only - только метаданные
-  - Metadata + Body - с текстом письма
-  - Full (with Attachments) - все данные + вложения
-- **Mark as Read**: Пометить письма как прочитанные
+1. Add **Xvr Advanced IMAP** node to your workflow
+2. Select your credentials
+3. Choose operation:
+   - **Fetch Emails** - retrieve emails
+   - **Get Folders** - get mailbox folders
 
-### Дополнительные опции:
+---
 
-- **From Filter**: Фильтр по отправителю
-- **Subject Filter**: Фильтр по теме
+## ?? Features
 
-## ?? Структура вывода
+### Fetch Emails
 
-### Основные поля:
+- **Mailbox Selection**: INBOX, Sent, Drafts, or any folder
+- **Read Status Filter**: All, Unread Only, Read Only
+- **Flexible Data Fetching**:
+  - Metadata Only (subject, from, to, date)
+  - Metadata + Body (includes text and HTML)
+  - Full (with Attachments as binary data)
+- **Search Filters**: By sender, by subject
+- **Mark as Read**: Optionally mark emails as read
+- **Limit**: Control how many emails to fetch (1-1000)
+
+### Get Folders
+
+- Retrieve all available mailbox folders
+- Supports nested folders
+- Works with any IMAP server
+
+---
+
+## ?? Output Structure
+
+### Email Data (JSON)
 
 ```json
 {
@@ -131,7 +106,7 @@ n8n start
 }
 ```
 
-### Бинарные данные (вложения):
+### Attachments (Binary Data)
 
 ```
 binary: {
@@ -139,108 +114,164 @@ binary: {
     data: "base64...",
     mimeType: "application/pdf",
     fileName: "document.pdf"
+  },
+  attachment_1: {
+    data: "base64...",
+    mimeType: "image/jpeg",
+    fileName: "photo.jpg"
   }
 }
 ```
 
-## ?? Разработка
+---
 
-### Локальный запуск:
-```bash
-npm run dev                  # Базовый тест
-npm run test:advanced        # Улучшенный тест (рекомендуется)
+## ?? Examples
+
+### Example 1: Fetch Unread Emails
+
+```yaml
+Operation: Fetch Emails
+Mailbox: INBOX
+Read Status: Unread Only
+Limit: 10
+Data to Fetch: Metadata + Body
+Mark as Read: true
 ```
 
-### Сборка проекта:
-```bash
-npm run build
+### Example 2: Download Attachments
+
+```yaml
+Operation: Fetch Emails
+Mailbox: INBOX
+Read Status: All
+Data to Fetch: Full (with Attachments)
+Limit: 50
 ```
 
-### Очистка:
-```bash
-npm run clean
+### Example 3: Filter by Sender
+
+```yaml
+Operation: Fetch Emails
+Mailbox: INBOX
+Additional Options:
+  From Filter: noreply@company.com
+Data to Fetch: Metadata + Body
 ```
 
-## ?? Примеры использования
+---
 
-### Пример 1: Получить непрочитанные письма
-```typescript
-{
-  mailbox: 'INBOX',
-  readStatus: 'unread',
-  limit: 10,
-  dataToFetch: 'body',
-  markAsRead: true
-}
-```
+## ?? Supported IMAP Servers
 
-### Пример 2: Скачать все вложения из папки
-```typescript
-{
-  mailbox: 'INBOX',
-  readStatus: 'all',
-  limit: 50,
-  dataToFetch: 'full',
-  markAsRead: false
-}
-```
+| Provider | Tested | IMAP Host | Port |
+|----------|--------|-----------|------|
+| **Yandex** | ? Yes | imap.yandex.ru | 993 |
+| **Gmail** | ?? Compatible | imap.gmail.com | 993 |
+| **Outlook** | ?? Compatible | outlook.office365.com | 993 |
+| **Yahoo** | ?? Compatible | imap.mail.yahoo.com | 993 |
+| **Others** | ?? Should work | - | 993 |
 
-### Пример 3: Фильтр по отправителю
-```typescript
-{
-  mailbox: 'INBOX',
-  additionalOptions: {
-    fromFilter: 'noreply@company.com'
-  },
-  dataToFetch: 'body'
-}
-```
+**Note for Gmail:** Use [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password.
+
+---
+
+## ?? Documentation
+
+- **README.md** (this file) - Overview and quick start
+- **QUICKSTART.md** - Detailed testing guide
+- **INSTALLATION.md** - Installation instructions
+- **TESTING.md** - Local testing guide
+- **MIGRATION.md** - ImapFlow migration history
+- **STATUS.md** - Project status (100% ready)
+- **TEST_RESULTS.md** - Test results
+
+---
 
 ## ?? Troubleshooting
 
-### Ошибка подключения
-- Проверьте правильность host, port, user, password
-- Убедитесь, что используется правильный порт (993 для SSL)
-- Включите "Allow Unauthorized Certificates" для самоподписанных сертификатов
+### Connection Error
+- Verify host, port, user, and password
+- Ensure port 993 is correct (SSL/TLS)
+- Enable "Allow Unauthorized Certificates" for self-signed certificates
 
-### Не находит папки
-- Используйте операцию "Get Folders" для получения доступных папок
-- Обратите внимание разделители могут различаться (/, ., |)
+### Can't Find Folders
+- Use "Get Folders" operation to see available folders
+- Note: folder separators may vary (/, ., |)
 
-### Не скачиваются вложения
-- Убедитесь, что выбрано "Full (with Attachments)" в Data to Fetch
-- Проверьте размер писем при больших объемах
+### Attachments Not Downloading
+- Select "Full (with Attachments)" in Data to Fetch
+- Check email size and timeout settings
 
-### "INBOX is empty" в тестах
-- Это не ошибка! Просто нет непрочитанных писем
-- Отправьте себе тестовое письмо для проверки
-- Функциональность полностью работоспособна
-
-### Таймауты при больших вложениях
-- Увеличьте timeout в настройках n8n workflow
-- Рассмотрите обработку больших файлов отдельно
+### Gmail "Invalid Credentials"
+- Use App Password, not regular password
+- Enable IMAP in Gmail settings
 
 ---
 
-## ?? Документация
+## ??? Development
 
-- **README.md** (этот файл) - Обзор проекта и quick start
-- **QUICKSTART.md** - Подробный быстрый старт для тестирования
-- **INSTALLATION.md** - Детальная инструкция по установке в n8n
-- **TESTING.md** - Руководство по локальному тестированию
-- **MIGRATION.md** - История миграции на ImapFlow (2025-01-07)
-- **STATUS.md** - Текущий статус проекта (100% готов)
-- **TEST_RESULTS.md** - Результаты тестирования
+### Local Testing
 
-## ?? Лицензия
-ISC
+1. Clone repository:
+```bash
+git clone https://github.com/BirkOFH/XvrImapReader.git
+cd XvrImapReader
+```
 
-## ?? Поддержка
-При возникших проблемах:
-1. Проверьте `TROUBLESHOOTING.md`
-2. Запустите `TestRunnerAdvanced.ts` локально
-3. Создайте Issue в репозитории
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create `.env`:
+```bash
+cp .env.example .env
+# Edit .env with your IMAP credentials
+```
+
+4. Run tests:
+```bash
+npm run test:advanced
+```
+
+See `TESTING.md` for detailed instructions.
 
 ---
 
-**? Статус проекта:** Полностью функционален и готов к использованию!
+## ?? License
+
+ISC License - see LICENSE file for details.
+
+---
+
+## ?? Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+---
+
+## ?? Support
+
+- **GitHub Issues**: https://github.com/BirkOFH/XvrImapReader/issues
+- **Documentation**: See docs in repository
+- **n8n Community**: https://community.n8n.io/
+
+---
+
+## ? Credits
+
+Built with:
+- [ImapFlow](https://github.com/postalsys/imapflow) - Modern IMAP client
+- [mailparser](https://github.com/nodemailer/mailparser) - Email parsing
+- [n8n](https://n8n.io/) - Workflow automation platform
+
+---
+
+**?? Status:** Production Ready ?  
+**?? Version:** 1.0.0  
+**?? Last Updated:** 2025-01-07
+
+**Made with ?? for the n8n community**

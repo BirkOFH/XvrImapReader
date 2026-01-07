@@ -1,32 +1,32 @@
 import {
-    IExecuteFunctions,
-    ILoadOptionsFunctions,
-    INodeExecutionData,
-    INodePropertyOptions,
     INodeType,
     INodeTypeDescription,
+    IExecuteFunctions,
+    INodeExecutionData,
+    ILoadOptionsFunctions,
+    INodePropertyOptions,
     NodeOperationError,
 } from 'n8n-workflow';
 
 import { ImapService, ImapConfig, FetchOptions } from './ImapService';
 
-export class MyImap implements INodeType {
+export class XvrAdvancedImap implements INodeType {
     description: INodeTypeDescription = {
-        displayName: 'My IMAP',
-        name: 'myImap',
+        displayName: 'Xvr Advanced IMAP',
+        name: 'xvrAdvancedImap',
         icon: 'fa:envelope',
         group: ['input'],
         version: 1,
         subtitle: '={{$parameter["operation"]}}',
-        description: 'Advanced IMAP email reader with attachment support',
+        description: 'Advanced IMAP client with full attachment support',
         defaults: {
-            name: 'My IMAP',
+            name: 'Xvr Advanced IMAP',
         },
         inputs: ['main'],
         outputs: ['main'],
         credentials: [
             {
-                name: 'myImapCredentials',
+                name: 'xvrImapCredentials',
                 required: true,
             },
         ],
@@ -40,26 +40,24 @@ export class MyImap implements INodeType {
                     {
                         name: 'Fetch Emails',
                         value: 'fetchEmails',
-                        description: 'Retrieve emails from mailbox',
+                        description: 'Fetch emails from mailbox',
                         action: 'Fetch emails from mailbox',
                     },
                     {
                         name: 'Get Folders',
                         value: 'getFolders',
-                        description: 'Get list of all mailbox folders',
-                        action: 'Get list of mailbox folders',
+                        description: 'Get list of available folders',
+                        action: 'Get list of available folders',
                     },
                 ],
                 default: 'fetchEmails',
             },
 
+            // Fetch Emails options
             {
                 displayName: 'Mailbox Name',
                 name: 'mailbox',
-                type: 'options',
-                typeOptions: {
-                    loadOptionsMethod: 'getMailboxes',
-                },
+                type: 'string',
                 displayOptions: {
                     show: {
                         operation: ['fetchEmails'],
@@ -67,9 +65,8 @@ export class MyImap implements INodeType {
                 },
                 default: 'INBOX',
                 required: true,
-                description: 'The mailbox to read emails from',
+                description: 'The mailbox to fetch emails from (e.g., INBOX, Sent, Drafts)',
             },
-
             {
                 displayName: 'Read Status',
                 name: 'readStatus',
@@ -83,23 +80,19 @@ export class MyImap implements INodeType {
                     {
                         name: 'All',
                         value: 'all',
-                        description: 'Retrieve all emails',
                     },
                     {
                         name: 'Unread Only',
                         value: 'unread',
-                        description: 'Retrieve only unread emails',
                     },
                     {
                         name: 'Read Only',
                         value: 'read',
-                        description: 'Retrieve only read emails',
                     },
                 ],
-                default: 'unread',
+                default: 'all',
                 description: 'Filter emails by read status',
             },
-
             {
                 displayName: 'Limit',
                 name: 'limit',
@@ -109,14 +102,13 @@ export class MyImap implements INodeType {
                         operation: ['fetchEmails'],
                     },
                 },
+                default: 10,
                 typeOptions: {
                     minValue: 1,
                     maxValue: 1000,
                 },
-                default: 10,
-                description: 'Maximum number of emails to retrieve',
+                description: 'Maximum number of emails to fetch',
             },
-
             {
                 displayName: 'Data to Fetch',
                 name: 'dataToFetch',
@@ -130,23 +122,22 @@ export class MyImap implements INodeType {
                     {
                         name: 'Metadata Only',
                         value: 'metadata',
-                        description: 'Subject, From, To, Date only',
+                        description: 'Only subject, from, to, date',
                     },
                     {
                         name: 'Metadata + Body',
                         value: 'body',
-                        description: 'Include email text and HTML body',
+                        description: 'Include email body (text and HTML)',
                     },
                     {
                         name: 'Full (with Attachments)',
                         value: 'full',
-                        description: 'Include everything including attachments',
+                        description: 'Include body and attachments as binary data',
                     },
                 ],
                 default: 'body',
                 description: 'What data to download from emails',
             },
-
             {
                 displayName: 'Mark as Read',
                 name: 'markAsRead',
@@ -157,9 +148,10 @@ export class MyImap implements INodeType {
                     },
                 },
                 default: false,
-                description: 'Whether to mark emails as read after processing',
+                description: 'Whether to mark fetched emails as read',
             },
 
+            // Additional options
             {
                 displayName: 'Additional Options',
                 name: 'additionalOptions',
@@ -177,15 +169,13 @@ export class MyImap implements INodeType {
                         name: 'fromFilter',
                         type: 'string',
                         default: '',
-                        placeholder: 'sender@example.com',
-                        description: 'Filter emails by sender address',
+                        description: 'Filter emails by sender address (e.g., sender@example.com)',
                     },
                     {
                         displayName: 'Subject Filter',
                         name: 'subjectFilter',
                         type: 'string',
                         default: '',
-                        placeholder: 'Invoice',
                         description: 'Filter emails by subject text',
                     },
                 ],
@@ -196,7 +186,7 @@ export class MyImap implements INodeType {
     methods = {
         loadOptions: {
             async getMailboxes(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-                const credentials = await this.getCredentials('myImapCredentials');
+                const credentials = await this.getCredentials('xvrImapCredentials');
 
                 const config: ImapConfig = {
                     host: credentials.host as string,
@@ -234,16 +224,17 @@ export class MyImap implements INodeType {
         const returnData: INodeExecutionData[] = [];
         const operation = this.getNodeParameter('operation', 0) as string;
 
-        const credentials = await this.getCredentials('myImapCredentials');
+        // Get credentials
+        const credentials = await this.getCredentials('xvrImapCredentials');
 
         const config: ImapConfig = {
             host: credentials.host as string,
             port: credentials.port as number,
             user: credentials.user as string,
             password: credentials.password as string,
-            tls: credentials.tls as boolean,
+            tls: credentials.secure as boolean,
             tlsOptions: {
-                rejectUnauthorized: !(credentials.allowUnauthorizedCerts as boolean),
+                rejectUnauthorized: credentials.allowUnauthorized === false,
             },
         };
 
@@ -251,100 +242,91 @@ export class MyImap implements INodeType {
 
         try {
             if (operation === 'getFolders') {
+                // Get folder list
                 const folders = await imapService.getFolderList();
-
+                
                 for (const folder of folders) {
                     returnData.push({
                         json: {
-                            folder,
+                            folder: folder,
                         },
-                        pairedItem: { item: 0 },
                     });
                 }
             } else if (operation === 'fetchEmails') {
-                for (let i = 0; i < items.length; i++) {
-                    const mailbox = this.getNodeParameter('mailbox', i) as string;
-                    const readStatus = this.getNodeParameter('readStatus', i) as string;
-                    const limit = this.getNodeParameter('limit', i) as number;
-                    const dataToFetch = this.getNodeParameter('dataToFetch', i) as string;
-                    const markAsRead = this.getNodeParameter('markAsRead', i) as boolean;
-                    const additionalOptions = this.getNodeParameter('additionalOptions', i, {}) as any;
+                // Fetch emails
+                const mailbox = this.getNodeParameter('mailbox', 0) as string;
+                const readStatus = this.getNodeParameter('readStatus', 0) as string;
+                const limit = this.getNodeParameter('limit', 0) as number;
+                const dataToFetch = this.getNodeParameter('dataToFetch', 0) as string;
+                const markAsRead = this.getNodeParameter('markAsRead', 0) as boolean;
+                const additionalOptions = this.getNodeParameter('additionalOptions', 0, {}) as any;
 
-                    const searchCriteria: any[] = [];
+                // Build search criteria
+                const searchCriteria: any[] = [];
+                
+                if (readStatus === 'unread') {
+                    searchCriteria.push('UNSEEN');
+                } else if (readStatus === 'read') {
+                    searchCriteria.push('SEEN');
+                } else {
+                    searchCriteria.push('ALL');
+                }
 
-                    if (readStatus === 'unread') {
-                        searchCriteria.push('UNSEEN');
-                    } else if (readStatus === 'read') {
-                        searchCriteria.push('SEEN');
-                    }
+                if (additionalOptions.fromFilter) {
+                    searchCriteria.push('FROM', additionalOptions.fromFilter);
+                }
 
-                    if (additionalOptions.fromFilter) {
-                        searchCriteria.push('FROM', additionalOptions.fromFilter);
-                    }
+                if (additionalOptions.subjectFilter) {
+                    searchCriteria.push('SUBJECT', additionalOptions.subjectFilter);
+                }
 
-                    if (additionalOptions.subjectFilter) {
-                        searchCriteria.push('SUBJECT', additionalOptions.subjectFilter);
-                    }
+                const fetchOptions: FetchOptions = {
+                    folder: mailbox,
+                    limit: limit,
+                    downloadBody: dataToFetch !== 'metadata',
+                    downloadAttachments: dataToFetch === 'full',
+                    searchCriteria: searchCriteria,
+                    markAsRead: markAsRead,
+                };
 
-                    if (searchCriteria.length === 0) {
-                        searchCriteria.push('ALL');
-                    }
+                const emails = await imapService.fetchEmails(fetchOptions);
 
-                    const fetchOptions: FetchOptions = {
-                        folder: mailbox,
-                        limit,
-                        downloadBody: dataToFetch === 'body' || dataToFetch === 'full',
-                        downloadAttachments: dataToFetch === 'full',
-                        searchCriteria,
-                        markAsRead,
+                for (const email of emails) {
+                    const item: INodeExecutionData = {
+                        json: {
+                            uid: email.uid,
+                            subject: email.subject,
+                            from: email.from,
+                            to: email.to,
+                            date: email.date,
+                            textBody: email.textBody,
+                            htmlBody: email.htmlBody,
+                            attachmentCount: email.attachments?.length || 0,
+                        },
+                        binary: {},
                     };
 
-                    const emails = await imapService.fetchEmails(fetchOptions);
-
-                    for (const email of emails) {
-                        const item: INodeExecutionData = {
-                            json: {
-                                uid: email.uid,
-                                subject: email.subject,
-                                from: email.from,
-                                to: email.to,
-                                date: email.date,
-                            },
-                            pairedItem: { item: i },
-                        };
-
-                        if (email.textBody !== undefined) {
-                            item.json.textBody = email.textBody;
-                        }
-
-                        if (email.htmlBody !== undefined) {
-                            item.json.htmlBody = email.htmlBody;
-                        }
-
-                        if (email.attachments && email.attachments.length > 0) {
-                            item.binary = {};
-                            email.attachments.forEach((attachment, index) => {
-                                const binaryPropertyName = `attachment_${index}`;
-                                item.binary![binaryPropertyName] = {
+                    // Add attachments as binary data
+                    if (email.attachments && email.attachments.length > 0) {
+                        for (let i = 0; i < email.attachments.length; i++) {
+                            const attachment = email.attachments[i];
+                            if (attachment) {
+                                item.binary![`attachment_${i}`] = {
                                     data: attachment.data.toString('base64'),
                                     mimeType: attachment.mimeType,
                                     fileName: attachment.filename,
                                 };
-                            });
-
-                            item.json.attachmentCount = email.attachments.length;
+                            }
                         }
-
-                        returnData.push(item);
                     }
+
+                    returnData.push(item);
                 }
             }
-        } catch (error) {
-            throw new NodeOperationError(this.getNode(), `Error: ${(error as Error).message}`);
+
+            return [returnData];
         } finally {
             await imapService.disconnect();
         }
-
-        return [returnData];
     }
 }

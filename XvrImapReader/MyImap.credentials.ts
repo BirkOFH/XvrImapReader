@@ -5,10 +5,10 @@ import {
     INodeProperties,
 } from 'n8n-workflow';
 
-export class MyImapCredentials implements ICredentialType {
-    name = 'myImapCredentials';
-    displayName = 'IMAP Credentials';
-    documentationUrl = 'https://docs.n8n.io/credentials/';
+export class XvrImapCredentials implements ICredentialType {
+    name = 'xvrImapCredentials';
+    displayName = 'Xvr IMAP Credentials';
+    documentationUrl = 'https://github.com/BirkOFH/XvrImapReader';
     properties: INodeProperties[] = [
         {
             displayName: 'Host',
@@ -17,7 +17,6 @@ export class MyImapCredentials implements ICredentialType {
             default: '',
             placeholder: 'imap.example.com',
             required: true,
-            description: 'IMAP server hostname',
         },
         {
             displayName: 'Port',
@@ -25,7 +24,6 @@ export class MyImapCredentials implements ICredentialType {
             type: 'number',
             default: 993,
             required: true,
-            description: 'IMAP server port (usually 993 for SSL/TLS)',
         },
         {
             displayName: 'User',
@@ -34,7 +32,6 @@ export class MyImapCredentials implements ICredentialType {
             default: '',
             placeholder: 'user@example.com',
             required: true,
-            description: 'Email address or username',
         },
         {
             displayName: 'Password',
@@ -45,21 +42,20 @@ export class MyImapCredentials implements ICredentialType {
             },
             default: '',
             required: true,
-            description: 'Email account password',
         },
         {
-            displayName: 'Use TLS',
-            name: 'tls',
+            displayName: 'Secure Connection (TLS)',
+            name: 'secure',
             type: 'boolean',
             default: true,
             description: 'Whether to use TLS/SSL encryption',
         },
         {
             displayName: 'Allow Unauthorized Certificates',
-            name: 'allowUnauthorizedCerts',
+            name: 'allowUnauthorized',
             type: 'boolean',
-            default: false,
-            description: 'Whether to allow unauthorized/self-signed certificates',
+            default: true,
+            description: 'Whether to allow connections with self-signed certificates',
         },
     ];
 
